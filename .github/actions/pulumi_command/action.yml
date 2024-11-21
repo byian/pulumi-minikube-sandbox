@@ -1,0 +1,81 @@
+name: Pulumi Command
+inputs:
+  pulumiAccessToken:
+    required: false
+    default: ""
+  pulumiPassphrase:
+    required: true
+  pulumiUpdatePlan:
+    required: false
+    default: ""
+  pulumiStackName:
+    required: false
+    default: prod
+  pulumiCommand:
+    required: true
+  pulumiRefresh:
+    required: false
+    default: false
+  pulumiDiff:
+    required: false
+    default: false    
+  pulumiCommentOnPrNumber:
+    required: false
+    default: 0
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Python Cache
+      id: python_cache
+      uses: actions/cache@v4
+      with:
+        path: venv
+        key: pip-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
+      
+    - name: Install dependencies
+      if: steps.python_cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        # Check if venv exists (restored from secondary keys if any, and delete)
+        # You might not need this line if you only have one primary key for the venv caching
+        # I kept it in my code as a fail-safe
+        if [ -d "venv" ]; then rm -rf venv; fi
+        
+        # Re-create the venv
+        python3 -m venv venv
+        
+        # Install dependencies
+        venv/bin/python3 -m pip install -r requirements.txt
+
+    - name: Run pulumi ${{ inputs.pulumiCommand }} command
+      uses: byian/pulumi_actions@186a0d45eb173ef7dc47f9eeee7d27506f5cc32c
+      with:
+        command: ${{ inputs.pulumiCommand }}
+        stack-name: ${{ inputs.pulumiStackName }}
+        comment-on-pr: true
+        comment-on-pr-number: ${{ inputs.pulumiCommentOnPrNumber }}
+        comment-on-summary: true
+        refresh: ${{ inputs.pulumiRefresh }}
+        diff: ${{ inputs.pulumiDiff }}
+        suppress-progress: true
+        edit-pr-comment: false
+        always-include-summary: true
+        color: always
+        plan: ${{ inputs.pulumiUpdatePlan }}
+        cloud-url: ${{ inputs.AWSBucket }}
+      env:
+        PULUMI_ACCESS_TOKEN: ${{ inputs.pulumiAccessToken }}
+        PULUMI_CONFIG_PASSPHRASE: ${{ inputs.pulumiPassphrase }}
+        PULUMI_FORCE_NEW_FROM_SUBTYPES: true
+        PULUMI_CONTINUE_ON_ERROR: true
+        ARM_USE_OIDC: true
+        ARM_CLIENT_ID: ${{ inputs.ARMClientId }}
+        ARM_TENANT_ID: ${{ inputs.ARMTenantId }}
+        ARM_SUBSCRIPTION_ID: ${{ inputs.ARMSubscriptionId }}
+        AWS_REGION: ${{ inputs.AWSRegion }}
