@@ -54,7 +54,7 @@ runs:
         venv/bin/python3 -m pip install -r requirements.txt
 
     - name: Run pulumi ${{ inputs.pulumiCommand }} command
-      uses: byian/pulumi_actions@6ac143ba46f46013a2017086198b62149e80427f
+      uses: byian/pulumi_actions@ae128eda55eba5fcb204083b2a22cc8de524b8c6
       with:
         command: ${{ inputs.pulumiCommand }}
         stack-name: ${{ inputs.pulumiStackName }}
