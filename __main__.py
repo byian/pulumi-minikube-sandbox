@@ -5,7 +5,7 @@ from pulumi_kubernetes.apps.v1 import Deployment
 
 app_labels = { "app": "nginx" }
 
-for i in range(10):
+for i in range(5):
     deployment = Deployment(
         f'nginx-{i}',
         spec={
